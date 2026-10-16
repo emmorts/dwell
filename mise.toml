@@ -1,0 +1,3 @@
+# Same Bun as Cloudflare Workers Builds, so bun.lock keeps one format everywhere.
+[tools]
+bun = "1.2.15"

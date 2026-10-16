@@ -1,4 +1,0 @@
-# Resolve and record packages from the public npm registry, so bun.lock stays
-# usable outside any private mirror (Workers Builds included).
-[install]
-registry = "https://registry.npmjs.org/"

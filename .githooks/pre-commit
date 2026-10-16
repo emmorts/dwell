@@ -1,0 +1,7 @@
+#!/bin/sh
+# Refuses a commit whose staged bun.lock points at a private registry mirror.
+# Checks the staged content, not the working copy. Enable once per clone: bun run mirror setup
+if git diff --cached --name-only | grep -qx 'bun.lock'; then
+	git show :bun.lock | bun scripts/mirror.ts check - || exit 1
+fi
+exit 0
