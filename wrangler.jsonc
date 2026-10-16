@@ -1,0 +1,11 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "dwell",
+	// Pin to the date this config was written; update when changing runtime behaviour.
+	"compatibility_date": "2026-10-16",
+	// Static-only app: no Worker script. Unmatched paths (e.g. /callback) serve index.html.
+	"assets": {
+		"directory": "./build",
+		"not_found_handling": "single-page-application"
+	}
+}
