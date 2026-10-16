@@ -137,3 +137,7 @@ file. Set `PUBLIC_SPOTIFY_CLIENT_ID` at build time and register the matching `/c
 
 Contributions are welcome. For larger changes, please open an issue first to discuss the approach. Everyone
 who has contributed is listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
+
+## License
+
+Dwell is released under the [MIT License](LICENSE).
