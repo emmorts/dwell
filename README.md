@@ -1,7 +1,8 @@
 # Dwell: song length timetable
 
-Connect a Spotify account, pick one of your playlists ("line") or your Liked Songs, and list only the songs
-whose running time falls inside a minimum/maximum range (in minutes).
+Connect a Spotify account, pick one or more "lines" (playlists, or your Liked Songs), and list only the
+songs whose running time falls inside a minimum/maximum range (in minutes). Songs that appear in several
+selected lines are shown once.
 
 Design system: transit timetable signage. All tokens and component classes live in
 `src/app.css`; use those classes instead of ad hoc colours or fonts.
@@ -32,6 +33,10 @@ Authorization Code with PKCE, so no client secret is needed.
 
    Open http://127.0.0.1:5173.
 
+**Registry:** this repo always installs from the public npm registry (`https://registry.npmjs.org/`),
+set in both `.npmrc` and `bunfig.toml`. `bun.lock` must never record a private mirror, because Cloudflare
+cannot reach one. A fresh install therefore needs access to `registry.npmjs.org`.
+
 ## Deploy (Cloudflare Workers)
 
 The app builds to static files in `build/`. `wrangler.jsonc` serves them as an
@@ -52,8 +57,8 @@ Local preview of the production build: `bun run build && bunx wrangler dev`.
 
 - Playlists listed are the ones you own or that are collaborative, because Spotify
   only returns item-level contents for those.
-- Liked Songs needs the `user-library-read` permission. If you connected before this was
-  added, click "Log out", then "Connect Spotify" once to grant it.
+- Liked Songs reads your saved tracks and needs the `user-library-read` permission. Sessions created
+  before that permission was added show a "Reconnect" button on that line. Click it once to grant it.
 - Podcast episodes and unavailable tracks are skipped.
 - Tokens are kept in `localStorage` and refreshed automatically. "Log out" clears them.
 - Length bounds are inclusive: a 7:00 song passes a 7-minute minimum.
