@@ -135,7 +135,7 @@
 		outline-offset: 0;
 	}
 
-	/* Checkbox: ink-coloured native control, sized to the timetable grid. */
+	/* Checkbox: ink-coloured native control, sized to the grid. */
 	.check {
 		width: 1.25rem;
 		height: 1.25rem;
@@ -150,7 +150,7 @@
 		opacity: 0.4;
 	}
 
-	/* One line in the line picker. */
+	/* One playlist (or Liked Songs) in the picker. */
 	.source-row {
 		display: flex;
 		align-items: center;
@@ -175,8 +175,8 @@
 		color: var(--color-ink);
 	}
 
-	/* A timetable row: fixed stop number, title block, tabular duration. */
-	.stop-row {
+	/* A song row: fixed number, thumbnail, title block, tabular duration. */
+	.song-row {
 		display: grid;
 		grid-template-columns: 3.5rem 3rem 1fr auto;
 		align-items: center;
@@ -185,7 +185,7 @@
 		padding: 0.75rem 0;
 	}
 
-	.stop-number {
+	.song-number {
 		font-family: var(--font-display);
 		font-size: 1.25rem;
 		font-weight: 600;
@@ -193,7 +193,7 @@
 		color: var(--color-ink-soft);
 	}
 
-	.stop-duration {
+	.song-duration {
 		font-family: var(--font-display);
 		font-size: 1.75rem;
 		font-weight: 700;

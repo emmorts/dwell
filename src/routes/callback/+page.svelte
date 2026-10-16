@@ -32,6 +32,6 @@
 		<p class="notice">{error}</p>
 		<a href="/" class="btn-quiet">Back to start</a>
 	{:else}
-		<p class="eyebrow">Boarding Spotify…</p>
+		<p class="eyebrow">Connecting to Spotify…</p>
 	{/if}
 </main>

@@ -11,7 +11,6 @@
 			<a href="/" class="font-display text-4xl leading-none font-bold tracking-tight uppercase">
 				Dwell
 			</a>
-			<p class="eyebrow">Song length timetable</p>
 		</div>
 	</header>
 

@@ -27,7 +27,7 @@
 	let playlists = $state<Playlist[]>([]);
 	let libraryAccess = $state(false);
 
-	// Line picker state. A "line" is a playlist, or LIKED_SONGS.
+	// Playlist picker state. A source is a playlist, or LIKED_SONGS.
 	let query = $state('');
 	let selected = $state<string[]>([]);
 	let cache = $state<Record<string, Track[]>>({});
@@ -47,7 +47,7 @@
 	);
 	const selectedCount = $derived(selected.length);
 
-	// Songs from every selected line, de-duplicated by URI, in line order.
+	// Songs from every selected source, de-duplicated by URI, in source order.
 	const merged = $derived.by(() => {
 		const seen = new Set<string>();
 		const out: Track[] = [];
@@ -87,8 +87,7 @@
 		if (e instanceof SpotifyApiError && e.status === 403) {
 			if (id === LIKED_SONGS) {
 				return {
-					message:
-						'Spotify has not granted access to your library. Reconnect to grant it.',
+					message: 'Spotify has not granted access to your library. Reconnect to grant it.',
 					reconnect: true
 				};
 			}
@@ -175,10 +174,10 @@
 
 <main class="mx-auto max-w-3xl space-y-8 px-6 py-10">
 	{#if status === 'loading'}
-		<p class="eyebrow">Loading timetable…</p>
+		<p class="eyebrow">Loading…</p>
 	{:else if status === 'logged-out'}
 		<section class="panel space-y-5">
-			<h1 class="heading">Plan by song length</h1>
+			<h1 class="heading">Filter songs by length</h1>
 			<p class="text-lg text-ink-soft">
 				Connect Spotify to see which songs in your playlists or Liked Songs fall within a set
 				running time.
@@ -186,7 +185,7 @@
 			<button onclick={login} class="btn-primary">Connect Spotify</button>
 		</section>
 	{:else if status === 'error'}
-		<h1 class="heading">Service disruption</h1>
+		<h1 class="heading">Something went wrong</h1>
 		<p class="notice">{error}</p>
 		{#if isConfigured}
 			{#if isLoggedIn()}
@@ -197,13 +196,13 @@
 		{/if}
 	{:else}
 		<div class="flex items-center justify-between">
-			<h1 class="heading">Timetable</h1>
+			<h1 class="heading">Filter songs by length</h1>
 			<button onclick={signOut} class="btn-quiet">Log out</button>
 		</div>
 
 		<section class="panel space-y-5">
 			<div class="flex flex-wrap items-end justify-between gap-4">
-				<span class="eyebrow tabular-nums">Lines · {selectedCount} selected</span>
+				<span class="eyebrow tabular-nums">Playlists and Liked Songs · {selectedCount} selected</span>
 				<div class="flex gap-6">
 					<button
 						class="btn-quiet"
@@ -219,8 +218,8 @@
 			<input
 				type="search"
 				class="field"
-				placeholder="Search lines"
-				aria-label="Search lines"
+				placeholder="Search playlists"
+				aria-label="Search playlists"
 				bind:value={query}
 			/>
 
@@ -248,12 +247,12 @@
 						{/if}
 					</li>
 				{:else}
-					<li class="px-4 py-6 text-center text-ink-soft">No lines match “{query}”.</li>
+					<li class="px-4 py-6 text-center text-ink-soft">No playlists match “{query}”.</li>
 				{/each}
 			</ul>
 
 			{#if pending > 0}
-				<p class="eyebrow tabular-nums">Loading {pending} {pending === 1 ? 'line' : 'lines'}…</p>
+				<p class="eyebrow">Loading songs…</p>
 			{/if}
 
 			{#each Object.entries(sourceErrors) as [id, err] (id)}
@@ -271,11 +270,11 @@
 		<section class="panel space-y-6">
 			<div class="grid grid-cols-2 gap-6">
 				<label class="block space-y-2">
-					<span class="eyebrow">Minimum (minutes)</span>
+					<span class="eyebrow">Shortest (minutes)</span>
 					<input type="number" min="0" step="0.5" class="field" bind:value={minMinutes} />
 				</label>
 				<label class="block space-y-2">
-					<span class="eyebrow">Maximum (minutes)</span>
+					<span class="eyebrow">Longest (minutes)</span>
 					<input
 						type="number"
 						min="0"
@@ -289,31 +288,31 @@
 		</section>
 
 		{#if selectedCount === 0}
-			<p class="eyebrow">Select one or more lines to see stops.</p>
+			<p class="eyebrow">Select one or more playlists to see songs.</p>
 		{:else}
 			<section class="space-y-2">
 				<div class="flex items-baseline justify-between border-b-2 border-ink pb-2">
-					<span class="eyebrow">Stops in service</span>
-					<span class="eyebrow tabular-nums">{filtered.length} of {merged.length}</span>
+					<span class="eyebrow">Songs</span>
+					<span class="eyebrow tabular-nums">{filtered.length} of {merged.length} match</span>
 				</div>
 				<ol>
 					{#each filtered as t, i (t.uri)}
-						<li class="stop-row">
-							<span class="stop-number">{String(i + 1).padStart(2, '0')}</span>
+						<li class="song-row">
+							<span class="song-number">{String(i + 1).padStart(2, '0')}</span>
 							<Thumb images={t.album?.images} size={48} icon="note" />
 							<div class="min-w-0">
 								<p class="truncate text-lg font-semibold">{t.name}</p>
 								<p class="truncate text-ink-soft">{t.artists.map((a) => a.name).join(', ')}</p>
 							</div>
-							<span class="stop-duration">{formatDuration(t.duration_ms)}</span>
+							<span class="song-duration">{formatDuration(t.duration_ms)}</span>
 						</li>
 					{:else}
 						<li class="py-10 text-center">
 							{#if pending > 0}
-								<p class="eyebrow">Loading stops…</p>
+								<p class="eyebrow">Loading songs…</p>
 							{:else}
-								<p class="heading text-2xl">No service</p>
-								<p class="text-ink-soft">No songs fall within this running time.</p>
+								<p class="heading text-2xl">No matching songs</p>
+								<p class="text-ink-soft">No songs fall within this length range.</p>
 							{/if}
 						</li>
 					{/each}
