@@ -22,8 +22,12 @@
 	type Source = { id: string; name: string; images: SpotifyImage[] | null; icon: 'list' | 'heart' };
 	type SourceError = { message: string; reconnect: boolean };
 
+	// Set before reloading after a 401, so the logged-out view can explain why.
+	const EXPIRED_NOTICE_KEY = 'spotify_expired_notice';
+
 	let status = $state<Status>('loading');
 	let error = $state<string | null>(null);
+	let notice = $state<string | null>(null);
 	let playlists = $state<Playlist[]>([]);
 	let libraryAccess = $state(false);
 
@@ -34,9 +38,10 @@
 	let sourceErrors = $state<Record<string, SourceError>>({});
 	let pending = $state(0);
 
-	// Minutes as typed by the user. Empty max means "no upper bound".
+	// Song filters: minutes as typed (empty max means no upper bound), then free-text search.
 	let minMinutes = $state<number | null>(7);
 	let maxMinutes = $state<number | null>(null);
+	let songQuery = $state('');
 
 	const sources = $derived<Source[]>([
 		{ id: LIKED_SONGS, name: 'Liked Songs', images: null, icon: 'heart' },
@@ -64,9 +69,18 @@
 
 	const minMs = $derived((minMinutes ?? 0) * 60_000);
 	const maxMs = $derived(maxMinutes === null ? Infinity : maxMinutes * 60_000);
-	const filtered = $derived(
+	const byLength = $derived(
 		merged.filter((t) => t.duration_ms >= minMs && t.duration_ms <= maxMs)
 	);
+	const matching = $derived.by(() => {
+		const q = songQuery.trim().toLowerCase();
+		if (!q) return byLength;
+		return byLength.filter(
+			(t) =>
+				t.name.toLowerCase().includes(q) ||
+				t.artists.some((a) => a.name.toLowerCase().includes(q))
+		);
+	});
 
 	function formatDuration(ms: number): string {
 		const totalSeconds = Math.round(ms / 1000);
@@ -150,6 +164,8 @@
 			return;
 		}
 		if (!isLoggedIn()) {
+			notice = sessionStorage.getItem(EXPIRED_NOTICE_KEY);
+			sessionStorage.removeItem(EXPIRED_NOTICE_KEY);
 			status = 'logged-out';
 			return;
 		}
@@ -160,7 +176,12 @@
 			status = 'ready';
 		} catch (e) {
 			if (e instanceof SpotifyApiError && e.status === 401) {
-				// Stored session is no longer valid: clear it and offer a fresh login.
+				// The stored session was revoked or expired. Clear it, then reload so the
+				// layout and this page both start from the logged-out state.
+				sessionStorage.setItem(
+					EXPIRED_NOTICE_KEY,
+					'Your Spotify session has expired. Connect again to continue.'
+				);
 				logout();
 				window.location.reload();
 				return;
@@ -179,6 +200,9 @@
 	{:else if status === 'logged-out'}
 		<section class="panel space-y-5">
 			<h1 class="heading">Filter by length</h1>
+			{#if notice}
+				<p class="notice">{notice}</p>
+			{/if}
 			<p class="text-lg text-ink-soft">
 				Connect Spotify to see which songs in your playlists or Liked Songs fall within a set
 				running time.
@@ -231,11 +255,15 @@
 								onchange={() => toggle(s.id)}
 							/>
 							<Thumb images={s.images} size={40} icon={s.icon} />
-							<span class="min-w-0 flex-1 truncate" class:font-semibold={checked}>{s.name}</span>
+							<span class="min-w-0 flex-1">
+								<span class="line-clamp-2 break-words" class:font-semibold={checked}>{s.name}</span>
+								{#if cache[s.id]}
+									<span class="block text-sm text-ink-soft tabular-nums"
+										>{cache[s.id].length} {cache[s.id].length === 1 ? 'song' : 'songs'}</span
+									>
+								{/if}
+							</span>
 						</label>
-						{#if cache[s.id]}
-							<span class="eyebrow shrink-0 tabular-nums">{cache[s.id].length} songs</span>
-						{/if}
 						{#if blocked}
 							<button class="btn-quiet shrink-0" onclick={login}>Reconnect</button>
 						{/if}
@@ -290,18 +318,27 @@
 		{#if selectedCount === 0}
 			<p class="eyebrow">Select one or more playlists to see songs.</p>
 		{:else}
-			<section class="space-y-2">
+			<section class="space-y-4">
 				<div class="flex items-baseline justify-between gap-4 border-b-2 border-ink pb-2">
 					<span class="eyebrow">Songs</span>
-					<span class="eyebrow tabular-nums">{filtered.length} of {merged.length} match</span>
+					<span class="eyebrow tabular-nums">{matching.length} of {merged.length} match</span>
 				</div>
+
+				<input
+					type="search"
+					class="field"
+					placeholder="Search songs or artists"
+					aria-label="Search songs or artists"
+					bind:value={songQuery}
+				/>
+
 				<ol>
-					{#each filtered as t, i (t.uri)}
+					{#each matching as t, i (t.uri)}
 						<li class="song-row">
 							<span class="song-number">{String(i + 1).padStart(2, '0')}</span>
 							<Thumb images={t.album?.images} size={40} icon="note" />
 							<div class="min-w-0">
-								<p class="truncate font-semibold">{t.name}</p>
+								<p class="line-clamp-2 break-words font-semibold">{t.name}</p>
 								<p class="truncate text-sm text-ink-soft">{t.artists.map((a) => a.name).join(', ')}</p>
 							</div>
 							<span class="song-duration">{formatDuration(t.duration_ms)}</span>
@@ -310,6 +347,9 @@
 						<li class="py-10 text-center">
 							{#if pending > 0}
 								<p class="eyebrow">Loading songs…</p>
+							{:else if songQuery.trim()}
+								<p class="heading text-2xl">No matching songs</p>
+								<p class="text-ink-soft">Nothing matches “{songQuery.trim()}” in this length range.</p>
 							{:else}
 								<p class="heading text-2xl">No matching songs</p>
 								<p class="text-ink-soft">No songs fall within this length range.</p>
