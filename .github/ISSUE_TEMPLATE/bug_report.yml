@@ -1,0 +1,64 @@
+name: Bug report
+description: Something is not working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please search existing issues first.
+
+        **Do not include** Spotify tokens, account emails, or screenshots that show private playlist names.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, and what went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps are most helpful.
+      placeholder: |
+        1. Connect Spotify
+        2. Select "Liked Songs"
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did you see it?
+      options:
+        - dwell.auxarena.com (hosted)
+        - Local development
+        - My own deployment
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: "e.g. Safari 18.1, Chrome 131"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device, operating system and screen width
+      placeholder: "e.g. iPhone 15, iOS 18, 390px wide; or macOS 15 desktop"
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors (optional)
+      description: Browser developer tools → Console. Remove any tokens before pasting.
+      render: text
