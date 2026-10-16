@@ -17,6 +17,7 @@
 		type Track
 	} from '../lib/spotify';
 	import Thumb from '../lib/components/Thumb.svelte';
+	import SkeletonRow from '../lib/components/SkeletonRow.svelte';
 
 	type Status = 'loading' | 'logged-out' | 'ready' | 'error';
 	type Source = { id: string; name: string; images: SpotifyImage[] | null; icon: 'list' | 'heart' };
@@ -35,13 +36,15 @@
 	let query = $state('');
 	let selected = $state<string[]>([]);
 	let cache = $state<Record<string, Track[]>>({});
+	let inFlight = $state<Record<string, true>>({});
 	let sourceErrors = $state<Record<string, SourceError>>({});
-	let pending = $state(0);
 
 	// Song filters: minutes as typed (empty max means no upper bound), then free-text search.
 	let minMinutes = $state<number | null>(7);
 	let maxMinutes = $state<number | null>(null);
 	let songQuery = $state('');
+
+	const loadingCount = $derived(Object.keys(inFlight).length);
 
 	const sources = $derived<Source[]>([
 		{ id: LIKED_SONGS, name: 'Liked Songs', images: null, icon: 'heart' },
@@ -122,8 +125,8 @@
 	}
 
 	async function load(id: string) {
-		if (cache[id]) return;
-		pending += 1;
+		if (cache[id] || inFlight[id]) return;
+		inFlight = { ...inFlight, [id]: true };
 		try {
 			const tracks = id === LIKED_SONGS ? await fetchLikedTracks() : await fetchPlaylistTracks(id);
 			cache = { ...cache, [id]: tracks };
@@ -131,7 +134,7 @@
 		} catch (e) {
 			sourceErrors = { ...sourceErrors, [id]: describeError(id, e) };
 		} finally {
-			pending -= 1;
+			inFlight = withoutKey(inFlight, id);
 		}
 	}
 
@@ -196,7 +199,17 @@
 
 <main class="mx-auto max-w-3xl space-y-8 px-6 py-10">
 	{#if status === 'loading'}
-		<p class="eyebrow">Loading…</p>
+		<h1 class="heading">Filter by length</h1>
+		<section class="panel space-y-5" aria-busy="true">
+			<p class="sr-only" role="status">Loading playlists</p>
+			<span class="skeleton h-4 w-40" aria-hidden="true"></span>
+			<span class="skeleton h-10" aria-hidden="true"></span>
+			<ul class="max-h-80 overflow-hidden border-2 border-ink" aria-hidden="true">
+				{#each [0, 1, 2, 3, 4] as i (i)}
+					<SkeletonRow kind="source" />
+				{/each}
+			</ul>
+		</section>
 	{:else if status === 'logged-out'}
 		<section class="panel space-y-5">
 			<h1 class="heading">Filter by length</h1>
@@ -256,8 +269,10 @@
 							/>
 							<Thumb images={s.images} size={40} icon={s.icon} />
 							<span class="min-w-0 flex-1">
-								<span class="line-clamp-2 break-words" class:font-semibold={checked}>{s.name}</span>
-								{#if cache[s.id]}
+								<span class="line-clamp-2 break-words" title={s.name} class:font-semibold={checked}>{s.name}</span>
+								{#if inFlight[s.id]}
+									<span class="skeleton mt-1 h-3 w-20" aria-hidden="true"></span>
+								{:else if cache[s.id]}
 									<span class="block text-sm text-ink-soft tabular-nums"
 										>{cache[s.id].length} {cache[s.id].length === 1 ? 'song' : 'songs'}</span
 									>
@@ -272,10 +287,6 @@
 					<li class="px-4 py-6 text-center text-ink-soft">No playlists match “{query}”.</li>
 				{/each}
 			</ul>
-
-			{#if pending > 0}
-				<p class="eyebrow tabular-nums">Loading songs…</p>
-			{/if}
 
 			{#each Object.entries(sourceErrors) as [id, err] (id)}
 				<div class="notice space-y-3">
@@ -332,30 +343,37 @@
 					bind:value={songQuery}
 				/>
 
-				<ol>
+				{#if loadingCount > 0}
+					<p class="sr-only" role="status">Loading songs</p>
+				{/if}
+
+				<ol aria-busy={loadingCount > 0}>
 					{#each matching as t, i (t.uri)}
 						<li class="song-row">
 							<span class="song-number">{String(i + 1).padStart(2, '0')}</span>
 							<Thumb images={t.album?.images} size={40} icon="note" />
 							<div class="min-w-0">
-								<p class="line-clamp-2 break-words font-semibold">{t.name}</p>
+								<p class="line-clamp-2 break-words font-semibold" title={t.name}>{t.name}</p>
 								<p class="truncate text-sm text-ink-soft">{t.artists.map((a) => a.name).join(', ')}</p>
 							</div>
 							<span class="song-duration">{formatDuration(t.duration_ms)}</span>
 						</li>
-					{:else}
+					{/each}
+
+					{#if loadingCount > 0}
+						{#each [0, 1, 2] as i (i)}
+							<SkeletonRow kind="song" />
+						{/each}
+					{:else if matching.length === 0}
 						<li class="py-10 text-center">
-							{#if pending > 0}
-								<p class="eyebrow">Loading songs…</p>
-							{:else if songQuery.trim()}
-								<p class="heading text-2xl">No matching songs</p>
+							<p class="heading text-2xl">No matching songs</p>
+							{#if songQuery.trim()}
 								<p class="text-ink-soft">Nothing matches “{songQuery.trim()}” in this length range.</p>
 							{:else}
-								<p class="heading text-2xl">No matching songs</p>
 								<p class="text-ink-soft">No songs fall within this length range.</p>
 							{/if}
 						</li>
-					{/each}
+					{/if}
 				</ol>
 			</section>
 		{/if}

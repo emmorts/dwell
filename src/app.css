@@ -177,13 +177,18 @@
 		opacity: 0.4;
 	}
 
-	/* One playlist (or Liked Songs) in the picker. */
+	/*
+	 * Every list row has the same fixed height, so rows never change size when a name
+	 * wraps, a count loads, or a skeleton is replaced. A name can take two lines, and
+	 * the subtitle line always fits beneath it.
+	 */
 	.source-row {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
+		height: 4.5rem;
 		border-bottom: 1px solid var(--color-rule);
-		padding: 0.6rem 1rem;
+		padding: 0 1rem;
 	}
 
 	.source-row:last-child {
@@ -208,8 +213,8 @@
 		grid-template-columns: 2.25rem 2.5rem minmax(0, 1fr) auto;
 		align-items: center;
 		gap: 0.75rem;
+		height: 4.5rem;
 		border-bottom: 1px solid var(--color-rule);
-		padding: 0.75rem 0;
 	}
 
 	@media (min-width: 40rem) {
@@ -260,6 +265,13 @@
 		height: 55%;
 	}
 
+	/* Loading placeholder that pulses. Same geometry as the content it stands in for. */
+	.skeleton {
+		display: block;
+		background-color: var(--color-paper-deep);
+		animation: skeleton-pulse 1.4s ease-in-out infinite;
+	}
+
 	/* Panel: boxed section that groups controls, like a timetable block. */
 	.panel {
 		border: 2px solid var(--color-ink);
@@ -270,5 +282,21 @@
 		.panel {
 			padding: 1.5rem;
 		}
+	}
+}
+
+@keyframes skeleton-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.45;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.skeleton {
+		animation: none;
 	}
 }
