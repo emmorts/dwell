@@ -6,6 +6,11 @@ set with a strict time slot.
 
 **Try it:** [dwell.auxarena.com](https://dwell.auxarena.com)
 
+<p align="center">
+  <img src="docs/screenshots/mobile-1.jpg" width="260" alt="Dwell on a mobile phone, screenshot 1 of 2" />
+  <img src="docs/screenshots/mobile-2.jpg" width="260" alt="Dwell on a mobile phone, screenshot 2 of 2" />
+</p>
+
 ## Features
 
 - Filter by minimum and maximum length, in minutes.
