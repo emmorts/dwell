@@ -2,9 +2,13 @@ const PUBLIC_SPOTIFY_CLIENT_ID: string = import.meta.env.PUBLIC_SPOTIFY_CLIENT_I
 
 const ACCOUNTS = 'https://accounts.spotify.com';
 const API = 'https://api.spotify.com/v1';
-const SCOPES = 'playlist-read-private playlist-read-collaborative user-library-read';
+const LIBRARY_SCOPE = 'user-library-read';
+const SCOPES = `playlist-read-private playlist-read-collaborative ${LIBRARY_SCOPE}`;
 const TOKEN_KEY = 'spotify_tokens';
 const VERIFIER_KEY = 'spotify_pkce_verifier';
+
+/** Source id for the user's saved tracks ("Liked Songs"). Not a playlist, so it is never a playlist id. */
+export const LIKED_SONGS = 'liked';
 
 export type Track = {
 	id: string | null;
@@ -22,20 +26,29 @@ export type Playlist = {
 	owner: { id: string };
 };
 
+/** Playlist items use `item` (renamed Feb 2026); saved tracks use `track`. Accept either. */
 export type PlaylistEntry = { item?: Track | null; track?: Track | null };
 
-type Tokens = { access_token: string; refresh_token: string; expires_at: number };
+type Tokens = { access_token: string; refresh_token: string; expires_at: number; scope?: string };
 type TokenResponse = {
 	access_token: string;
 	refresh_token?: string;
 	expires_in: number;
+	scope?: string;
 };
 type Page<T> = { items: T[]; next: string | null };
 
-export const isConfigured = Boolean(PUBLIC_SPOTIFY_CLIENT_ID);
+export class SpotifyApiError extends Error {
+	status: number;
 
-/** Sentinel select value for the user's saved tracks (not a playlist). */
-export const LIKED_SONGS = 'liked';
+	constructor(status: number, message: string) {
+		super(message);
+		this.name = 'SpotifyApiError';
+		this.status = status;
+	}
+}
+
+export const isConfigured = Boolean(PUBLIC_SPOTIFY_CLIENT_ID);
 
 function base64url(bytes: Uint8Array): string {
 	let binary = '';
@@ -73,12 +86,14 @@ async function requestToken(body: Record<string, string>): Promise<TokenResponse
 	return res.json();
 }
 
-function saveTokens(res: TokenResponse, previousRefresh?: string): void {
+function saveTokens(res: TokenResponse, previous?: Tokens): void {
 	const tokens: Tokens = {
 		access_token: res.access_token,
-		refresh_token: res.refresh_token ?? previousRefresh ?? '',
+		refresh_token: res.refresh_token ?? previous?.refresh_token ?? '',
 		// Refresh 60s early so a request never starts with an about-to-expire token.
-		expires_at: Date.now() + (res.expires_in - 60) * 1000
+		expires_at: Date.now() + (res.expires_in - 60) * 1000,
+		// Scopes actually granted to this token. Refresh responses may omit them.
+		scope: res.scope ?? previous?.scope
 	};
 	localStorage.setItem(TOKEN_KEY, JSON.stringify(tokens));
 }
@@ -105,6 +120,18 @@ export function isLoggedIn(): boolean {
 	return localStorage.getItem(TOKEN_KEY) !== null;
 }
 
+/**
+ * True when the stored token was granted the library scope. Sessions created before
+ * the scope was added have no `scope` field, and refresh never adds scopes, so they
+ * need a fresh login.
+ */
+export function hasLibraryAccess(): boolean {
+	const raw = localStorage.getItem(TOKEN_KEY);
+	if (!raw) return false;
+	const tokens: Tokens = JSON.parse(raw);
+	return (tokens.scope ?? '').split(' ').includes(LIBRARY_SCOPE);
+}
+
 async function accessToken(): Promise<string> {
 	const raw = localStorage.getItem(TOKEN_KEY);
 	if (!raw) throw new Error('Not logged in.');
@@ -116,7 +143,7 @@ async function accessToken(): Promise<string> {
 			grant_type: 'refresh_token',
 			refresh_token: tokens.refresh_token
 		});
-		saveTokens(res, tokens.refresh_token);
+		saveTokens(res, tokens);
 		return res.access_token;
 	} catch {
 		logout();
@@ -128,13 +155,9 @@ async function get<T>(url: string): Promise<T> {
 	const res = await fetch(url, {
 		headers: { Authorization: `Bearer ${await accessToken()}` }
 	});
-	if (res.status === 403) {
-		throw new Error(
-			'Spotify denied access (403). Check the account is allowlisted in the dashboard ' +
-				'(development mode), or log out and connect again to grant new permissions.'
-		);
+	if (!res.ok) {
+		throw new SpotifyApiError(res.status, `Spotify API error (${res.status}): ${await res.text()}`);
 	}
-	if (!res.ok) throw new Error(`Spotify API error (${res.status}): ${await res.text()}`);
 	return res.json();
 }
 
@@ -159,20 +182,19 @@ export async function fetchEditablePlaylists(userId: string): Promise<Playlist[]
 	return all.filter((p) => p.owner.id === userId || p.collaborative);
 }
 
-/** Returns only playable tracks; podcast episodes and unavailable items are dropped. */
-export async function fetchPlaylistTracks(playlistId: string): Promise<Track[]> {
-	const entries = await getAll<PlaylistEntry>(
-		`${API}/playlists/${encodeURIComponent(playlistId)}/items?limit=50`
-	);
+/** Shared by playlist and saved-track reads. Drops podcast episodes and unavailable items. */
+async function collectTracks(firstUrl: string): Promise<Track[]> {
+	const entries = await getAll<PlaylistEntry>(firstUrl);
 	return entries
 		.map((e) => e.item ?? e.track)
 		.filter((t): t is Track => Boolean(t) && t!.type !== 'episode');
 }
 
-/** The user's saved ("Liked Songs") tracks. They have their own endpoint, not a playlist. */
+export async function fetchPlaylistTracks(playlistId: string): Promise<Track[]> {
+	return collectTracks(`${API}/playlists/${encodeURIComponent(playlistId)}/items?limit=50`);
+}
+
+/** Saved tracks ("Liked Songs"). Requires the user-library-read scope. */
 export async function fetchLikedTracks(): Promise<Track[]> {
-	const entries = await getAll<PlaylistEntry>(`${API}/me/tracks?limit=50`);
-	return entries
-		.map((e) => e.track ?? e.item)
-		.filter((t): t is Track => Boolean(t) && t!.type !== 'episode');
+	return collectTracks(`${API}/me/tracks?limit=50`);
 }
