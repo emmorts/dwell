@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /*
- * DWELL design system: transit timetable signage.
+ * DWELL design system: transit-inspired signage styling.
  * Only the tokens below exist. Tailwind's default palette is reset so no
  * off-system colour can slip in.
  */
@@ -52,13 +52,14 @@
 		);
 	}
 
-	/* Small uppercase condensed caption, used for every label and section name. */
+	/* Small uppercase condensed caption for labels and section names. Never wraps. */
 	.eyebrow {
 		font-family: var(--font-display);
 		font-size: 0.875rem;
 		font-weight: 600;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
+		white-space: nowrap;
 		color: var(--color-ink-soft);
 	}
 
@@ -72,7 +73,7 @@
 		color: var(--color-ink);
 	}
 
-	/* Primary action: signal yellow block with ink text. */
+	/* Buttons never wrap their label. */
 	.btn-primary {
 		display: inline-block;
 		border: 2px solid var(--color-ink);
@@ -83,6 +84,7 @@
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
+		white-space: nowrap;
 		color: var(--color-ink);
 		cursor: pointer;
 	}
@@ -99,6 +101,7 @@
 		font-weight: 600;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
+		white-space: nowrap;
 		color: var(--color-ink);
 		border-bottom: 2px solid var(--color-ink);
 		padding-bottom: 0.1rem;
@@ -135,6 +138,30 @@
 		outline-offset: 0;
 	}
 
+	/* A field with a unit printed inside its right edge, e.g. "min". */
+	.field-wrap {
+		position: relative;
+		display: block;
+	}
+
+	.field-wrap .field {
+		padding-right: 3.5rem;
+	}
+
+	.field-suffix {
+		position: absolute;
+		top: 50%;
+		right: 0.75rem;
+		transform: translateY(-50%);
+		pointer-events: none;
+		font-family: var(--font-display);
+		font-size: 0.875rem;
+		font-weight: 600;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-ink-soft);
+	}
+
 	/* Checkbox: ink-coloured native control, sized to the grid. */
 	.check {
 		width: 1.25rem;
@@ -154,7 +181,7 @@
 	.source-row {
 		display: flex;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.75rem;
 		border-bottom: 1px solid var(--color-rule);
 		padding: 0.6rem 1rem;
 	}
@@ -175,19 +202,26 @@
 		color: var(--color-ink);
 	}
 
-	/* A song row: fixed number, thumbnail, title block, tabular duration. */
+	/* A song row: number, thumbnail, title block, tabular duration. Narrower on phones. */
 	.song-row {
 		display: grid;
-		grid-template-columns: 3.5rem 3rem 1fr auto;
+		grid-template-columns: 2.25rem 2.5rem minmax(0, 1fr) auto;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.75rem;
 		border-bottom: 1px solid var(--color-rule);
 		padding: 0.75rem 0;
 	}
 
+	@media (min-width: 40rem) {
+		.song-row {
+			grid-template-columns: 3rem 2.5rem minmax(0, 1fr) auto;
+			gap: 1rem;
+		}
+	}
+
 	.song-number {
 		font-family: var(--font-display);
-		font-size: 1.25rem;
+		font-size: 1.125rem;
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 		color: var(--color-ink-soft);
@@ -195,9 +229,10 @@
 
 	.song-duration {
 		font-family: var(--font-display);
-		font-size: 1.75rem;
+		font-size: 1.5rem;
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
 		color: var(--color-ink);
 	}
 
@@ -228,6 +263,12 @@
 	/* Panel: boxed section that groups controls, like a timetable block. */
 	.panel {
 		border: 2px solid var(--color-ink);
-		padding: 1.5rem;
+		padding: 1.25rem;
+	}
+
+	@media (min-width: 40rem) {
+		.panel {
+			padding: 1.5rem;
+		}
 	}
 }

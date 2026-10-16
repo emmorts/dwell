@@ -159,14 +159,15 @@
 			playlists = await fetchEditablePlaylists(me.id);
 			status = 'ready';
 		} catch (e) {
+			if (e instanceof SpotifyApiError && e.status === 401) {
+				// Stored session is no longer valid: clear it and offer a fresh login.
+				logout();
+				window.location.reload();
+				return;
+			}
 			error = e instanceof Error ? e.message : String(e);
 			status = 'error';
 		}
-	}
-
-	function signOut() {
-		logout();
-		window.location.href = '/';
 	}
 
 	onMount(init);
@@ -177,7 +178,7 @@
 		<p class="eyebrow">Loading…</p>
 	{:else if status === 'logged-out'}
 		<section class="panel space-y-5">
-			<h1 class="heading">Filter songs by length</h1>
+			<h1 class="heading">Filter by length</h1>
 			<p class="text-lg text-ink-soft">
 				Connect Spotify to see which songs in your playlists or Liked Songs fall within a set
 				running time.
@@ -185,24 +186,17 @@
 			<button onclick={login} class="btn-primary">Connect Spotify</button>
 		</section>
 	{:else if status === 'error'}
-		<h1 class="heading">Something went wrong</h1>
+		<h1 class="heading">Error</h1>
 		<p class="notice">{error}</p>
-		{#if isConfigured}
-			{#if isLoggedIn()}
-				<button onclick={signOut} class="btn-quiet">Log out</button>
-			{:else}
-				<button onclick={login} class="btn-quiet">Connect Spotify</button>
-			{/if}
+		{#if isConfigured && !isLoggedIn()}
+			<button onclick={login} class="btn-quiet">Connect Spotify</button>
 		{/if}
 	{:else}
-		<div class="flex items-center justify-between">
-			<h1 class="heading">Filter songs by length</h1>
-			<button onclick={signOut} class="btn-quiet">Log out</button>
-		</div>
+		<h1 class="heading">Filter by length</h1>
 
 		<section class="panel space-y-5">
-			<div class="flex flex-wrap items-end justify-between gap-4">
-				<span class="eyebrow tabular-nums">Playlists and Liked Songs · {selectedCount} selected</span>
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+				<span class="eyebrow tabular-nums">Playlists · {selectedCount} selected</span>
 				<div class="flex gap-6">
 					<button
 						class="btn-quiet"
@@ -228,7 +222,7 @@
 					{@const checked = selected.includes(s.id)}
 					{@const blocked = !canSelect(s.id)}
 					<li class="source-row">
-						<label class="flex min-w-0 flex-1 cursor-pointer items-center gap-4">
+						<label class="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
 							<input
 								type="checkbox"
 								class="check"
@@ -240,10 +234,10 @@
 							<span class="min-w-0 flex-1 truncate" class:font-semibold={checked}>{s.name}</span>
 						</label>
 						{#if cache[s.id]}
-							<span class="eyebrow tabular-nums">{cache[s.id].length} songs</span>
+							<span class="eyebrow shrink-0 tabular-nums">{cache[s.id].length} songs</span>
 						{/if}
 						{#if blocked}
-							<button class="btn-quiet" onclick={login}>Reconnect</button>
+							<button class="btn-quiet shrink-0" onclick={login}>Reconnect</button>
 						{/if}
 					</li>
 				{:else}
@@ -252,7 +246,7 @@
 			</ul>
 
 			{#if pending > 0}
-				<p class="eyebrow">Loading songs…</p>
+				<p class="eyebrow tabular-nums">Loading songs…</p>
 			{/if}
 
 			{#each Object.entries(sourceErrors) as [id, err] (id)}
@@ -267,22 +261,28 @@
 			{/each}
 		</section>
 
-		<section class="panel space-y-6">
-			<div class="grid grid-cols-2 gap-6">
+		<section class="panel">
+			<div class="grid grid-cols-2 gap-4 sm:gap-6">
 				<label class="block space-y-2">
-					<span class="eyebrow">Shortest (minutes)</span>
-					<input type="number" min="0" step="0.5" class="field" bind:value={minMinutes} />
+					<span class="eyebrow">Shortest</span>
+					<span class="field-wrap">
+						<input type="number" min="0" step="0.5" class="field" bind:value={minMinutes} />
+						<span class="field-suffix" aria-hidden="true">min</span>
+					</span>
 				</label>
 				<label class="block space-y-2">
-					<span class="eyebrow">Longest (minutes)</span>
-					<input
-						type="number"
-						min="0"
-						step="0.5"
-						placeholder="No limit"
-						class="field"
-						bind:value={maxMinutes}
-					/>
+					<span class="eyebrow">Longest</span>
+					<span class="field-wrap">
+						<input
+							type="number"
+							min="0"
+							step="0.5"
+							placeholder="No limit"
+							class="field"
+							bind:value={maxMinutes}
+						/>
+						<span class="field-suffix" aria-hidden="true">min</span>
+					</span>
 				</label>
 			</div>
 		</section>
@@ -291,7 +291,7 @@
 			<p class="eyebrow">Select one or more playlists to see songs.</p>
 		{:else}
 			<section class="space-y-2">
-				<div class="flex items-baseline justify-between border-b-2 border-ink pb-2">
+				<div class="flex items-baseline justify-between gap-4 border-b-2 border-ink pb-2">
 					<span class="eyebrow">Songs</span>
 					<span class="eyebrow tabular-nums">{filtered.length} of {merged.length} match</span>
 				</div>
@@ -299,10 +299,10 @@
 					{#each filtered as t, i (t.uri)}
 						<li class="song-row">
 							<span class="song-number">{String(i + 1).padStart(2, '0')}</span>
-							<Thumb images={t.album?.images} size={48} icon="note" />
+							<Thumb images={t.album?.images} size={40} icon="note" />
 							<div class="min-w-0">
-								<p class="truncate text-lg font-semibold">{t.name}</p>
-								<p class="truncate text-ink-soft">{t.artists.map((a) => a.name).join(', ')}</p>
+								<p class="truncate font-semibold">{t.name}</p>
+								<p class="truncate text-sm text-ink-soft">{t.artists.map((a) => a.name).join(', ')}</p>
 							</div>
 							<span class="song-duration">{formatDuration(t.duration_ms)}</span>
 						</li>
