@@ -1,85 +1,139 @@
-# Dwell: filter songs by length
+# Dwell
 
-Connect a Spotify account, pick one or more playlists (or your Liked Songs), and list only the songs
-whose running time falls inside a minimum/maximum range (in minutes). A song that appears in several
-selected playlists is shown once.
+**Filter your Spotify playlists by song length.** Pick a playlist, set a minimum and a maximum running time,
+and see only the songs that fit. Useful for finding the tracks that suit a 20-minute run, a commute, or a
+set with a strict time slot.
 
-Cover art comes from Spotify. Playlists and songs without art show an icon.
+**Try it:** [dwell.auxarena.com](https://dwell.auxarena.com)
 
-Design system: transit timetable signage. All tokens and component classes live in
-`src/app.css`; use those classes instead of ad hoc colours or fonts.
+## Features
 
-Stack: SvelteKit (SPA mode, static output), Svelte 5, Tailwind CSS v4, Bun 1.2.15. Auth is OAuth 2.0
-Authorization Code with PKCE, so no client secret is needed.
+- Filter by minimum and maximum length, in minutes.
+- Choose several playlists at once, or Liked Songs. A song in more than one selected source is shown once.
+- Search playlists, and search the filtered songs by title or artist.
+- Cover art from Spotify, with placeholders where none exists.
+- Works on phones and desktops.
 
-## Setup
+## Privacy
 
-1. Create an app at https://developer.spotify.com/dashboard.
-2. Add this Redirect URI exactly: `http://127.0.0.1:5173/callback`
-   (Spotify rejects `localhost`.)
-3. In the app's "User Management" section, add the Spotify account you will log in with.
-   Development-mode apps only work for allowlisted users.
-4. Copy the Client ID into `.env`:
+Dwell has no server and no database. Spotify sign-in uses OAuth with PKCE, so the app never sees a client
+secret. Your Spotify tokens are stored only in your browser's local storage. Click **Log out** to remove them.
 
-   ```sh
-   cp .env.example .env
-   # then set PUBLIC_SPOTIFY_CLIENT_ID
-   ```
+Dwell is not affiliated with or endorsed by Spotify.
 
-5. Install and run:
+## Using the hosted app
 
-   ```sh
-   bun run mirror setup     # once per clone: enables the pre-commit lockfile guard
-   bun run mirror install   # installs through the npm registry from your npm config
-   bun run dev
-   ```
+1. Open [dwell.auxarena.com](https://dwell.auxarena.com) and choose **Connect Spotify**.
+2. Pick one or more playlists, or Liked Songs.
+3. Set the shortest and longest length you want.
 
-   Open http://127.0.0.1:5173.
+Spotify's development mode only lets approved accounts sign in. If you see "Spotify denied access", ask the
+maintainer to add your Spotify account, or [self-host](#self-hosting) with your own Spotify app.
 
-## Packages, the lockfile and the registry
+## Development
 
-`bun.lock` always records public `https://registry.npmjs.org/` URLs. Cloudflare Workers Builds installs from
-those URLs, so they must never change. Bun downloads from the URLs recorded in the lockfile, not from the
-registry you configure. On a network that blocks registry.npmjs.org (for example a corporate VPN), use the
-wrapper, which installs through the registry from your npm config and restores public URLs afterwards:
+### Requirements
 
-- `bun run mirror install` runs any bun command: `bun run mirror add <pkg>`, `remove`, `update`.
-- A plain `bun install` on a blocked network fails with `ConnectionClosed`. Use the wrapper instead.
-- A plain `bun add` writes mirror URLs into `bun.lock`. `bun run mirror fix` restores public URLs, and the
-  pre-commit guard refuses to commit any non-public URL.
-- Git and file dependencies are also reported by the guard. They cannot come from a mirror, so review them
-  before committing.
-- Bun is pinned to 1.2.15 in `mise.toml`. Bun writes `bun.lock` in a version-specific format, so a different
-  version reformats it. The wrapper warns when the version differs.
-- Bun rewrites `package.json` formatting on `add` and `remove`. Review that diff before committing.
+- [Bun](https://bun.sh) 1.2.15. The version is pinned in `mise.toml`, so [mise](https://mise.jdx.dev) users get it automatically.
+- A Spotify developer app (see [Spotify setup](#spotify-setup)).
 
-## Deploy (Cloudflare Workers)
+### Getting started
 
-The app builds to static files in `build/`. `wrangler.jsonc` serves them as an
-assets-only Worker and sends unmatched paths such as `/callback` to `index.html`.
+```sh
+git clone https://github.com/emmorts/dwell.git
+cd dwell
+bun install                     # on a network that blocks npmjs, use: bun run mirror install
+cp .env.example .env        # then set PUBLIC_SPOTIFY_CLIENT_ID
+bun run dev
+```
 
-1. Create the Worker from the repository in the Cloudflare dashboard
-   (Workers & Pages → Create → Import a repository). Use:
-   - Build command: `bun run build`
-   - Deploy command: `npx wrangler deploy`
-2. Add the build variable `PUBLIC_SPOTIFY_CLIENT_ID`. Vite inlines it at build time,
-   and `.env` is not in the repository, so it must be set here.
-3. Register the production redirect URI in the Spotify dashboard:
-   `https://<your-worker>.workers.dev/callback` (or your custom domain).
+Open <http://127.0.0.1:5173>. Use `127.0.0.1`, not `localhost`, because Spotify requires a loopback IP for
+local redirect URIs.
 
-Local preview of the production build: `bun run build && bunx wrangler dev`.
+### Scripts
 
-## Tests
+| Command | What it does |
+| --- | --- |
+| `bun run dev` | Start the development server |
+| `bun run build` | Build static files into `build/` |
+| `bun run preview` | Serve the production build locally |
+| `bun run check` | Type-check the Svelte and TypeScript code |
+| `bun run test` | Run the tests |
+| `bun run lock:check` | Fail if `bun.lock` contains any non-public URL |
+| `bun run mirror <command>` | Run any Bun command through your configured npm registry (see below) |
 
-`bun run test` checks the lockfile rewrite rules, including a round trip on the committed `bun.lock`.
-`bun run lock:check` fails if the lockfile has any non-public URL.
+### Project layout
 
-## Notes
+```
+src/
+  lib/spotify.ts          Spotify sign-in (PKCE), token refresh, and API calls
+  lib/components/         Thumb (cover art) and SkeletonRow (loading placeholder)
+  routes/+page.svelte     The filter interface
+  routes/callback/        OAuth redirect handler
+  app.css                 Design tokens and component classes
+scripts/                  Lockfile tooling and its tests
+wrangler.jsonc            Cloudflare Workers configuration
+```
 
-- Playlists listed are the ones you own or that are collaborative, because Spotify
-  only returns song-level contents for those.
-- Liked Songs reads your saved tracks and needs the `user-library-read` permission. Sessions created
-  before that permission was added show a "Reconnect" button next to Liked Songs. Click it once to grant it.
-- Podcast episodes and unavailable tracks are skipped.
-- Tokens are kept in `localStorage` and refreshed automatically. "Log out" clears them.
-- Length bounds are inclusive: a 7:00 song passes a 7-minute minimum.
+Styling follows the design system in `src/app.css`. Add new UI with its tokens and component classes rather
+than ad hoc colours or fonts.
+
+### Dependencies and the lockfile
+
+`bun.lock` always records public `https://registry.npmjs.org/` URLs. The production build installs from those
+URLs, so please keep them public.
+
+Bun downloads from the URLs recorded in the lockfile, not from the registry you configure. If your network
+blocks registry.npmjs.org, route installs through your own npm registry with the wrapper:
+
+```sh
+bun run mirror install          # any Bun command: install, add <pkg>, remove <pkg>, update
+bun run mirror fix              # restore public URLs after a plain `bun add` wrote mirror URLs
+bun run mirror setup            # once per clone: enable the pre-commit guard
+```
+
+The guard refuses to commit a lockfile with non-public URLs, including git or file dependencies.
+
+### Before opening a pull request
+
+Run `bun run check`, `bun run test` and `bun run lock:check`. Then check the change at a 375px-wide viewport
+as well as on desktop.
+
+## Self-hosting
+
+Dwell builds to static files, so any static host can serve it. The repository includes a Cloudflare Workers
+configuration, described below.
+
+### Spotify setup
+
+1. Create an app at the [Spotify developer dashboard](https://developer.spotify.com/dashboard).
+2. Add a redirect URI that exactly matches your site's origin, followed by `/callback`:
+   - Local development: `http://127.0.0.1:5173/callback`
+   - Production: `https://your-domain.example/callback`
+3. Add the Spotify accounts that should be able to sign in. Development-mode apps only allow those accounts.
+   Check Spotify's current development-mode limits before inviting many users.
+4. Copy the **Client ID**. It is public by design, since PKCE needs no client secret.
+
+### Deploying to Cloudflare Workers
+
+`wrangler.jsonc` serves the built files as an assets-only Worker. Unknown paths such as `/callback` fall back
+to `index.html`, which the single-page app needs.
+
+1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Import a repository** and select your fork.
+2. Set the build command to `bun run build` and the deploy command to `npx wrangler deploy`.
+3. Add the build variable `PUBLIC_SPOTIFY_CLIENT_ID`. Vite inlines it into the JavaScript at build time, so
+   changing it requires a new build.
+4. Register `https://<your-worker>.workers.dev/callback` (or your custom domain) as a redirect URI in your
+   Spotify app.
+
+To preview the production build locally: `bun run build && bunx wrangler dev`.
+
+### Other static hosts
+
+Serve the contents of `build/`, and configure the host to return `index.html` for paths that do not match a
+file. Set `PUBLIC_SPOTIFY_CLIENT_ID` at build time and register the matching `/callback` redirect URI.
+
+## Contributing
+
+Contributions are welcome. For larger changes, please open an issue first to discuss the approach. Everyone
+who has contributed is listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
