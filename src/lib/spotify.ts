@@ -156,12 +156,25 @@ async function accessToken(): Promise<string> {
 	}
 }
 
+/** Spotify errors look like {"error": {"status": 401, "message": "..."}}. Show the message, not raw JSON. */
+async function readErrorMessage(res: Response): Promise<string> {
+	const text = await res.text();
+	let detail = text;
+	try {
+		const body = JSON.parse(text) as { error?: { message?: string } };
+		detail = body.error?.message ?? text;
+	} catch {
+		// Not JSON: keep the raw text.
+	}
+	return `Spotify error (${res.status}): ${detail}`;
+}
+
 async function get<T>(url: string): Promise<T> {
 	const res = await fetch(url, {
 		headers: { Authorization: `Bearer ${await accessToken()}` }
 	});
 	if (!res.ok) {
-		throw new SpotifyApiError(res.status, `Spotify API error (${res.status}): ${await res.text()}`);
+		throw new SpotifyApiError(res.status, await readErrorMessage(res));
 	}
 	return res.json();
 }
