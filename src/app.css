@@ -1,0 +1,172 @@
+@import 'tailwindcss';
+
+/*
+ * DWELL design system: transit timetable signage.
+ * Only the tokens below exist. Tailwind's default palette is reset so no
+ * off-system colour can slip in.
+ */
+@theme {
+	--color-*: initial;
+
+	--color-ink: #1d211e;
+	--color-ink-soft: #4b514c;
+	--color-paper: #f3efe4;
+	--color-paper-deep: #e6e0cf;
+	--color-rule: #c4bdab;
+	--color-signal: #f2b705;
+	--color-line-red: #c8281e;
+	--color-line-blue: #0b5aa6;
+	--color-line-green: #007a3d;
+
+	--font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Barlow Condensed', 'Barlow', ui-sans-serif, sans-serif;
+}
+
+@layer base {
+	html {
+		background-color: var(--color-paper);
+		color: var(--color-ink);
+	}
+
+	::selection {
+		background-color: var(--color-signal);
+		color: var(--color-ink);
+	}
+
+	:focus-visible {
+		outline: 3px solid var(--color-line-blue);
+		outline-offset: 2px;
+	}
+}
+
+@layer components {
+	/* Four-line route stripe: the single decorative motif of the system. */
+	.route-stripe {
+		height: 0.5rem;
+		background: linear-gradient(
+			to right,
+			var(--color-line-red) 0 25%,
+			var(--color-line-blue) 25% 50%,
+			var(--color-line-green) 50% 75%,
+			var(--color-signal) 75% 100%
+		);
+	}
+
+	/* Small uppercase condensed caption, used for every label and section name. */
+	.eyebrow {
+		font-family: var(--font-display);
+		font-size: 0.875rem;
+		font-weight: 600;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-ink-soft);
+	}
+
+	.heading {
+		font-family: var(--font-display);
+		font-size: 2.25rem;
+		font-weight: 700;
+		line-height: 1;
+		text-transform: uppercase;
+		letter-spacing: 0.01em;
+		color: var(--color-ink);
+	}
+
+	/* Primary action: signal yellow block with ink text. */
+	.btn-primary {
+		display: inline-block;
+		border: 2px solid var(--color-ink);
+		background-color: var(--color-signal);
+		padding: 0.6rem 1.25rem;
+		font-family: var(--font-display);
+		font-size: 1.125rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-ink);
+		cursor: pointer;
+	}
+
+	.btn-primary:hover {
+		background-color: var(--color-ink);
+		color: var(--color-signal);
+	}
+
+	/* Secondary action: underlined text link in the same condensed caps. */
+	.btn-quiet {
+		font-family: var(--font-display);
+		font-size: 1rem;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-ink);
+		border-bottom: 2px solid var(--color-ink);
+		padding-bottom: 0.1rem;
+		cursor: pointer;
+	}
+
+	.btn-quiet:hover {
+		color: var(--color-line-blue);
+		border-color: var(--color-line-blue);
+	}
+
+	/* Form controls: square, heavy ink border, no rounding. */
+	.field {
+		width: 100%;
+		border: 2px solid var(--color-ink);
+		background-color: var(--color-paper);
+		padding: 0.5rem 0.75rem;
+		font-family: var(--font-sans);
+		font-size: 1rem;
+		color: var(--color-ink);
+	}
+
+	.field::placeholder {
+		color: var(--color-ink-soft);
+	}
+
+	.field:focus {
+		outline: 3px solid var(--color-line-blue);
+		outline-offset: 0;
+	}
+
+	/* Error or warning notice: a thick red departure-hazard bar on the left. */
+	.notice {
+		border-left: 8px solid var(--color-line-red);
+		background-color: var(--color-paper-deep);
+		padding: 1rem 1.25rem;
+		color: var(--color-ink);
+	}
+
+	/* A timetable row: fixed stop number, title block, tabular duration. */
+	.stop-row {
+		display: grid;
+		grid-template-columns: 3.5rem 1fr auto;
+		align-items: center;
+		gap: 1rem;
+		border-bottom: 1px solid var(--color-rule);
+		padding: 0.75rem 0;
+	}
+
+	.stop-number {
+		font-family: var(--font-display);
+		font-size: 1.25rem;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		color: var(--color-ink-soft);
+	}
+
+	.stop-duration {
+		font-family: var(--font-display);
+		font-size: 1.75rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		color: var(--color-ink);
+	}
+
+	/* Panel: boxed section that groups controls, like a timetable block. */
+	.panel {
+		border: 2px solid var(--color-ink);
+		padding: 1.5rem;
+	}
+}
