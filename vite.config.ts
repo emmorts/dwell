@@ -1,6 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-static';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -14,7 +14,9 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter()
+			// Static SPA output. Workers serves /index.html for unmatched paths
+			// (single-page-application mode), so the fallback must be index.html.
+			adapter: adapter({ fallback: 'index.html' })
 		})
 	],
 	// Spotify only accepts loopback redirect URIs with 127.0.0.1 (not "localhost").
