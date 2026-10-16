@@ -6,7 +6,7 @@ whose running time falls inside a minimum/maximum range (in minutes).
 Design system: transit timetable signage. All tokens and component classes live in
 `src/app.css`; use those classes instead of ad hoc colours or fonts.
 
-Stack: SvelteKit (SPA mode), Svelte 5, Tailwind CSS v4, Bun. Auth is OAuth 2.0
+Stack: SvelteKit (SPA mode, static output), Svelte 5, Tailwind CSS v4, Bun. Auth is OAuth 2.0
 Authorization Code with PKCE, so no client secret is needed.
 
 ## Setup
@@ -31,6 +31,22 @@ Authorization Code with PKCE, so no client secret is needed.
    ```
 
    Open http://127.0.0.1:5173.
+
+## Deploy (Cloudflare Workers)
+
+The app builds to static files in `build/`. `wrangler.jsonc` serves them as an
+assets-only Worker and sends unmatched paths such as `/callback` to `index.html`.
+
+1. Create the Worker from the repository in the Cloudflare dashboard
+   (Workers & Pages → Create → Import a repository). Use:
+   - Build command: `bun run build`
+   - Deploy command: `npx wrangler deploy`
+2. Add the build variable `PUBLIC_SPOTIFY_CLIENT_ID`. Vite inlines it at build time,
+   and `.env` is not in the repository, so it must be set here.
+3. Register the production redirect URI in the Spotify dashboard:
+   `https://<your-worker>.workers.dev/callback` (or your custom domain).
+
+Local preview of the production build: `bun run build && bunx wrangler dev`.
 
 ## Notes
 
