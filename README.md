@@ -135,8 +135,8 @@ file. Set `PUBLIC_SPOTIFY_CLIENT_ID` at build time and register the matching `/c
 
 ## Contributing
 
-Contributions are welcome. For larger changes, please open an issue first to discuss the approach. Everyone
-who has contributed is listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Contributions are welcome. Read the [contributing guide](CONTRIBUTING.md) to get started, and follow the
+[Code of Conduct](CODE_OF_CONDUCT.md). Everyone who has contributed is listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 
