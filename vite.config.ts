@@ -1,11 +1,16 @@
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import adapter from '@sveltejs/adapter-static';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
 	// Expose PUBLIC_* variables from .env to the client as import.meta.env.PUBLIC_*.
 	envPrefix: 'PUBLIC_',
+	resolve: {
+		// Keep in sync with "paths" in tsconfig.json.
+		alias: [{ find: /^#lib\//, replacement: fileURLToPath(new URL('./src/lib/', import.meta.url)) }]
+	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({
