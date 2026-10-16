@@ -93,8 +93,7 @@ review comments or ask a question if something is unclear.
 
 ## Reporting security issues
 
-Please do not open a public issue for a security vulnerability. Email the maintainer at
-[tomas@stropus.dev](mailto:tomas@stropus.dev) instead.
+Please do not report security problems in a public issue. Follow the process in [SECURITY.md](SECURITY.md).
 
 ## License
 
