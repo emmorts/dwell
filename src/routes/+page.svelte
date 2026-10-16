@@ -7,7 +7,9 @@
 		logout,
 		fetchMe,
 		fetchEditablePlaylists,
+		fetchLikedTracks,
 		fetchPlaylistTracks,
+		LIKED_SONGS,
 		type Playlist,
 		type Track
 	} from '../lib/spotify';
@@ -68,7 +70,7 @@
 		if (!id) return;
 		loadingTracks = true;
 		try {
-			tracks = await fetchPlaylistTracks(id);
+			tracks = id === LIKED_SONGS ? await fetchLikedTracks() : await fetchPlaylistTracks(id);
 		} catch (e) {
 			fail(e);
 		} finally {
@@ -116,6 +118,7 @@
 					onchange={(e) => selectPlaylist(e.currentTarget.value)}
 				>
 					<option value="">Choose a playlist…</option>
+					<option value={LIKED_SONGS}>Liked Songs</option>
 					{#each playlists as p (p.id)}
 						<option value={p.id}>{p.name}</option>
 					{/each}

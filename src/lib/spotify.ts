@@ -2,7 +2,7 @@ const PUBLIC_SPOTIFY_CLIENT_ID: string = import.meta.env.PUBLIC_SPOTIFY_CLIENT_I
 
 const ACCOUNTS = 'https://accounts.spotify.com';
 const API = 'https://api.spotify.com/v1';
-const SCOPES = 'playlist-read-private playlist-read-collaborative';
+const SCOPES = 'playlist-read-private playlist-read-collaborative user-library-read';
 const TOKEN_KEY = 'spotify_tokens';
 const VERIFIER_KEY = 'spotify_pkce_verifier';
 
@@ -33,6 +33,9 @@ type TokenResponse = {
 type Page<T> = { items: T[]; next: string | null };
 
 export const isConfigured = Boolean(PUBLIC_SPOTIFY_CLIENT_ID);
+
+/** Sentinel select value for the user's saved tracks (not a playlist). */
+export const LIKED_SONGS = 'liked';
 
 function base64url(bytes: Uint8Array): string {
 	let binary = '';
@@ -127,8 +130,8 @@ async function get<T>(url: string): Promise<T> {
 	});
 	if (res.status === 403) {
 		throw new Error(
-			'Spotify denied access (403). In development mode the account must be added under ' +
-				'"User Management" in the Spotify dashboard.'
+			'Spotify denied access (403). Check the account is allowlisted in the dashboard ' +
+				'(development mode), or log out and connect again to grant new permissions.'
 		);
 	}
 	if (!res.ok) throw new Error(`Spotify API error (${res.status}): ${await res.text()}`);
@@ -163,5 +166,13 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<Track[]> 
 	);
 	return entries
 		.map((e) => e.item ?? e.track)
+		.filter((t): t is Track => Boolean(t) && t!.type !== 'episode');
+}
+
+/** The user's saved ("Liked Songs") tracks. They have their own endpoint, not a playlist. */
+export async function fetchLikedTracks(): Promise<Track[]> {
+	const entries = await getAll<PlaylistEntry>(`${API}/me/tracks?limit=50`);
+	return entries
+		.map((e) => e.track ?? e.item)
 		.filter((t): t is Track => Boolean(t) && t!.type !== 'episode');
 }
