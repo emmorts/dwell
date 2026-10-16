@@ -7,8 +7,9 @@ set with a strict time slot.
 **Try it:** [dwell.auxarena.com](https://dwell.auxarena.com)
 
 <p align="center">
-  <img src="docs/screenshots/mobile-1.jpg" width="260" alt="Dwell on a mobile phone, screenshot 1 of 2" />
-  <img src="docs/screenshots/mobile-2.jpg" width="260" alt="Dwell on a mobile phone, screenshot 2 of 2" />
+  <img src="docs/screenshots/homepage.jpg" width="240" alt="Dwell home screen on a mobile phone" />
+  <img src="docs/screenshots/playlist_selection.jpg" width="240" alt="Choosing playlists in Dwell on a mobile phone" />
+  <img src="docs/screenshots/filtered_songs.jpg" width="240" alt="Songs filtered by length in Dwell on a mobile phone" />
 </p>
 
 ## Features
