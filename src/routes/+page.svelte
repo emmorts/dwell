@@ -13,11 +13,13 @@
 		logout,
 		SpotifyApiError,
 		type Playlist,
+		type SpotifyImage,
 		type Track
 	} from '../lib/spotify';
+	import Thumb from '../lib/components/Thumb.svelte';
 
 	type Status = 'loading' | 'logged-out' | 'ready' | 'error';
-	type Source = { id: string; name: string };
+	type Source = { id: string; name: string; images: SpotifyImage[] | null; icon: 'list' | 'heart' };
 	type SourceError = { message: string; reconnect: boolean };
 
 	let status = $state<Status>('loading');
@@ -37,8 +39,8 @@
 	let maxMinutes = $state<number | null>(null);
 
 	const sources = $derived<Source[]>([
-		{ id: LIKED_SONGS, name: 'Liked Songs' },
-		...playlists.map((p) => ({ id: p.id, name: p.name }))
+		{ id: LIKED_SONGS, name: 'Liked Songs', images: null, icon: 'heart' },
+		...playlists.map((p) => ({ id: p.id, name: p.name, images: p.images ?? null, icon: 'list' as const }))
 	]);
 	const visibleSources = $derived(
 		sources.filter((s) => s.name.toLowerCase().includes(query.trim().toLowerCase()))
@@ -235,6 +237,7 @@
 								disabled={blocked}
 								onchange={() => toggle(s.id)}
 							/>
+							<Thumb images={s.images} size={40} icon={s.icon} />
 							<span class="min-w-0 flex-1 truncate" class:font-semibold={checked}>{s.name}</span>
 						</label>
 						{#if cache[s.id]}
@@ -297,6 +300,7 @@
 					{#each filtered as t, i (t.uri)}
 						<li class="stop-row">
 							<span class="stop-number">{String(i + 1).padStart(2, '0')}</span>
+							<Thumb images={t.album?.images} size={48} icon="note" />
 							<div class="min-w-0">
 								<p class="truncate text-lg font-semibold">{t.name}</p>
 								<p class="truncate text-ink-soft">{t.artists.map((a) => a.name).join(', ')}</p>

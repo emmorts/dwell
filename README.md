@@ -4,6 +4,8 @@ Connect a Spotify account, pick one or more "lines" (playlists, or your Liked So
 songs whose running time falls inside a minimum/maximum range (in minutes). Songs that appear in several
 selected lines are shown once.
 
+Cover art comes from Spotify. Lines and songs without art show an icon.
+
 Design system: transit timetable signage. All tokens and component classes live in
 `src/app.css`; use those classes instead of ad hoc colours or fonts.
 

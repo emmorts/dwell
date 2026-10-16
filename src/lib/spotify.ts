@@ -10,6 +10,8 @@ const VERIFIER_KEY = 'spotify_pkce_verifier';
 /** Source id for the user's saved tracks ("Liked Songs"). Not a playlist, so it is never a playlist id. */
 export const LIKED_SONGS = 'liked';
 
+export type SpotifyImage = { url: string; width: number | null; height: number | null };
+
 export type Track = {
 	id: string | null;
 	name: string;
@@ -17,6 +19,7 @@ export type Track = {
 	duration_ms: number;
 	type?: string;
 	artists: { name: string }[];
+	album?: { images: SpotifyImage[] } | null;
 };
 
 export type Playlist = {
@@ -24,6 +27,8 @@ export type Playlist = {
 	name: string;
 	collaborative: boolean;
 	owner: { id: string };
+	/** Cover art, largest first. May be empty. URLs expire within a day, so never persist them. */
+	images?: SpotifyImage[] | null;
 };
 
 /** Playlist items use `item` (renamed Feb 2026); saved tracks use `track`. Accept either. */

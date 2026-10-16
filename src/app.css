@@ -178,7 +178,7 @@
 	/* A timetable row: fixed stop number, title block, tabular duration. */
 	.stop-row {
 		display: grid;
-		grid-template-columns: 3.5rem 1fr auto;
+		grid-template-columns: 3.5rem 3rem 1fr auto;
 		align-items: center;
 		gap: 1rem;
 		border-bottom: 1px solid var(--color-rule);
@@ -199,6 +199,30 @@
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
 		color: var(--color-ink);
+	}
+
+	/* Cover art or icon placeholder. Size is set inline; the frame is always square. */
+	.thumb {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		border: 1px solid var(--color-rule);
+		background-color: var(--color-paper-deep);
+		color: var(--color-ink-soft);
+	}
+
+	.thumb img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.thumb svg {
+		width: 55%;
+		height: 55%;
 	}
 
 	/* Panel: boxed section that groups controls, like a timetable block. */
