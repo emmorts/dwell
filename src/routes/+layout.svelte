@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { onMount } from 'svelte';
-	import { isLoggedIn, logout } from '../lib/spotify';
+	import { isLoggedIn, logout } from '#lib/spotify';
 
 	let { children } = $props();
 

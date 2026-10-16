@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Library } from '../lib/library.svelte';
-	import LengthFilter from '../lib/components/LengthFilter.svelte';
-	import PlaylistPicker from '../lib/components/PlaylistPicker.svelte';
-	import SkeletonRow from '../lib/components/SkeletonRow.svelte';
-	import SongList from '../lib/components/SongList.svelte';
+	import { Library } from '#lib/library.svelte';
+	import LengthFilter from '#lib/components/LengthFilter.svelte';
+	import PlaylistPicker from '#lib/components/PlaylistPicker.svelte';
+	import SkeletonRow from '#lib/components/SkeletonRow.svelte';
+	import SongList from '#lib/components/SongList.svelte';
 	import {
 		fetchEditablePlaylists,
 		fetchMe,
@@ -14,8 +14,8 @@
 		login,
 		logout,
 		SpotifyApiError
-	} from '../lib/spotify';
-	import { matchesLength, matchesQuery } from '../lib/songs';
+	} from '#lib/spotify';
+	import { matchesLength, matchesQuery } from '#lib/songs';
 
 	type Status = 'loading' | 'logged-out' | 'ready' | 'error';
 

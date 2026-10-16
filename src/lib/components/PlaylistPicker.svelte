@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { login } from '../spotify';
-	import type { Library } from '../library.svelte';
+	import { login } from '#lib/spotify';
+	import type { Library } from '#lib/library.svelte';
 	import Thumb from './Thumb.svelte';
 
 	let { library }: { library: Library } = $props();

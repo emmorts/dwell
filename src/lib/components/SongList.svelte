@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { formatDuration } from '../format';
-	import type { Track } from '../spotify';
+	import { formatDuration } from '#lib/format';
+	import type { Track } from '#lib/spotify';
 	import SkeletonRow from './SkeletonRow.svelte';
 	import Thumb from './Thumb.svelte';
 

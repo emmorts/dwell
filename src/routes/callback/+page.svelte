@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { completeLogin } from '../../lib/spotify';
+	import { completeLogin } from '#lib/spotify';
 
 	let error = $state<string | null>(null);
 

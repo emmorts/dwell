@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SpotifyImage } from '../spotify';
+	import type { SpotifyImage } from '#lib/spotify';
 
 	type Props = {
 		images?: SpotifyImage[] | null;
