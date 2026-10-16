@@ -1,6 +1,6 @@
 # Dwell: song length timetable
 
-Connect a Spotify account, pick one of your playlists ("line"), and list only the songs
+Connect a Spotify account, pick one of your playlists ("line") or your Liked Songs, and list only the songs
 whose running time falls inside a minimum/maximum range (in minutes).
 
 Design system: transit timetable signage. All tokens and component classes live in
@@ -50,8 +50,10 @@ Local preview of the production build: `bun run build && bunx wrangler dev`.
 
 ## Notes
 
-- Only playlists you own or that are collaborative are listed, because Spotify
+- Playlists listed are the ones you own or that are collaborative, because Spotify
   only returns item-level contents for those.
+- Liked Songs needs the `user-library-read` permission. If you connected before this was
+  added, click "Log out", then "Connect Spotify" once to grant it.
 - Podcast episodes and unavailable tracks are skipped.
 - Tokens are kept in `localStorage` and refreshed automatically. "Log out" clears them.
 - Length bounds are inclusive: a 7:00 song passes a 7-minute minimum.
