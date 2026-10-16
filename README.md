@@ -9,7 +9,7 @@ Cover art comes from Spotify. Playlists and songs without art show an icon.
 Design system: transit timetable signage. All tokens and component classes live in
 `src/app.css`; use those classes instead of ad hoc colours or fonts.
 
-Stack: SvelteKit (SPA mode, static output), Svelte 5, Tailwind CSS v4, Bun. Auth is OAuth 2.0
+Stack: SvelteKit (SPA mode, static output), Svelte 5, Tailwind CSS v4, Bun 1.2.15. Auth is OAuth 2.0
 Authorization Code with PKCE, so no client secret is needed.
 
 ## Setup
@@ -29,15 +29,29 @@ Authorization Code with PKCE, so no client secret is needed.
 5. Install and run:
 
    ```sh
-   bun install
+   bun run mirror setup     # once per clone: enables the pre-commit lockfile guard
+   bun run mirror install   # installs through the npm registry from your npm config
    bun run dev
    ```
 
    Open http://127.0.0.1:5173.
 
-**Registry:** this repo always installs from the public npm registry (`https://registry.npmjs.org/`),
-set in both `.npmrc` and `bunfig.toml`. `bun.lock` must never record a private mirror, because Cloudflare
-cannot reach one. A fresh install therefore needs access to `registry.npmjs.org`.
+## Packages, the lockfile and the registry
+
+`bun.lock` always records public `https://registry.npmjs.org/` URLs. Cloudflare Workers Builds installs from
+those URLs, so they must never change. Bun downloads from the URLs recorded in the lockfile, not from the
+registry you configure. On a network that blocks registry.npmjs.org (for example a corporate VPN), use the
+wrapper, which installs through the registry from your npm config and restores public URLs afterwards:
+
+- `bun run mirror install` runs any bun command: `bun run mirror add <pkg>`, `remove`, `update`.
+- A plain `bun install` on a blocked network fails with `ConnectionClosed`. Use the wrapper instead.
+- A plain `bun add` writes mirror URLs into `bun.lock`. `bun run mirror fix` restores public URLs, and the
+  pre-commit guard refuses to commit any non-public URL.
+- Git and file dependencies are also reported by the guard. They cannot come from a mirror, so review them
+  before committing.
+- Bun is pinned to 1.2.15 in `mise.toml`. Bun writes `bun.lock` in a version-specific format, so a different
+  version reformats it. The wrapper warns when the version differs.
+- Bun rewrites `package.json` formatting on `add` and `remove`. Review that diff before committing.
 
 ## Deploy (Cloudflare Workers)
 
@@ -54,6 +68,11 @@ assets-only Worker and sends unmatched paths such as `/callback` to `index.html`
    `https://<your-worker>.workers.dev/callback` (or your custom domain).
 
 Local preview of the production build: `bun run build && bunx wrangler dev`.
+
+## Tests
+
+`bun run test` checks the lockfile rewrite rules, including a round trip on the committed `bun.lock`.
+`bun run lock:check` fails if the lockfile has any non-public URL.
 
 ## Notes
 
